@@ -36,12 +36,15 @@ def cmd_key(cmd):
 
 
 def run_cmd_with_cache(cmd):
+    # print(f"Running command: {cmd}")
     key = cmd_key(cmd)
     existing = cache.get(key)
     if existing:
+        # print(f"Found in cache: {cmd}: {existing}")
         return existing
     res = run_cmd(cmd)
     cache.set(key, res, None)
+    # print(f"CMD: {cmd}: {existing}")
     return res
 
 
@@ -237,25 +240,36 @@ def generic_list(app_name, data, name_field, fields):
         return None
 
 
+def extract_info(app_name, data):
+    lines = data.split('\n')
+    info = {}
+    for line in lines:
+        temp_list = line.split(': ')
+        if len(temp_list) > 1:
+            key = "_".join([x.upper() for x in temp_list[0].strip().split()])
+            val = temp_list[1].strip()
+            info[key] = val
+    return info
+
 def db_list(app_name, data):
-    return generic_list(app_name, data, "NAME", ["NAME", "VERSION", "STATUS", "EXPOSED PORTS", "LINKS"])
+    return extract_info(app_name, data)
 
 
 def postgres_list(app_name):
-    data = run_cmd_with_cache("postgres:list")
+    data = run_cmd_with_cache(f"postgres:info {app_name}")
     try:
         return db_list(app_name, data)
     except:
-        clear_cache("postgres:list")
+        clear_cache(f"postgres:info {app_name}")
         raise
 
 
 def redis_list(app_name):
-    data = run_cmd_with_cache("redis:list")
+    data = run_cmd_with_cache(f"redis:info {app_name}")
     try:
         return db_list(app_name, data)
     except:
-        clear_cache("redis:list")
+        clear_cache(f"redis:info {app_name}")
         raise
 
 
