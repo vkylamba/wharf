@@ -15,15 +15,19 @@ from datetime import datetime
 
 redis = StrictRedis.from_url(settings.CELERY_BROKER_URL)
 
+
 def handle_data(key, data):
     data = data.decode("utf-8")
     redis.append(key, data)
     print(data)
 
+
 def task_key(task_id):
     return "task:%s" % task_id
 
+
 keyfile = os.path.expanduser("~/.ssh/id_rsa")
+
 
 def generate_key():
     if not os.path.exists(keyfile):
@@ -37,11 +41,14 @@ def generate_key():
             f.write("%s %s" % (pub.get_name(), pub.get_base64()))
         print("Made new Wharf SSH key")
 
+
 generate_key()
+
 
 @app.task
 def get_public_key():
     return open("%s.pub" % keyfile).read()
+
 
 @app.task(bind=True)
 def run_ssh_command(self, command):
@@ -51,11 +58,13 @@ def run_ssh_command(self, command):
     client.set_missing_host_key_policy(AutoAddPolicy)
     known_hosts = os.path.expanduser('~/.ssh/known_hosts')
     try:
-        client.load_host_keys(known_hosts) # So that we also save back the new host
+        # So that we also save back the new host
+        client.load_host_keys(known_hosts)
     except FileNotFoundError:
         if not os.path.exists(os.path.dirname(known_hosts)):
             os.mkdir(os.path.dirname(known_hosts))
-        open(known_hosts, "w").write("") # so connect doesn't barf when trying to save
+        # so connect doesn't barf when trying to save
+        open(known_hosts, "w").write("")
     if type(command) == list:
         commands = command
     else:
@@ -65,7 +74,8 @@ def run_ssh_command(self, command):
             pkey = RSAKey.from_private_key_file(keyfile)
         else:
             pkey = None
-        client.connect(settings.DOKKU_HOST, port=settings.DOKKU_SSH_PORT, username="dokku", pkey=pkey, allow_agent=False, look_for_keys=False)
+        client.connect(settings.DOKKU_HOST, port=settings.DOKKU_SSH_PORT,
+                       username="dokku", pkey=pkey, allow_agent=False, look_for_keys=False)
         transport = client.get_transport()
         channel = transport.open_session()
         channel.exec_command(c)
@@ -85,12 +95,15 @@ def run_ssh_command(self, command):
                 time.sleep(0.1)
     return redis.get(key).decode("utf-8")
 
+
 def set_nb(pipe):
     flags = fcntl(pipe, F_GETFL)
     fcntl(pipe, F_SETFL, flags | O_NONBLOCK)
 
+
 def run_process(key, cmd, cwd=None):
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, cwd=cwd)
     set_nb(p.stdout)
     set_nb(p.stderr)
     while True:
@@ -108,8 +121,9 @@ def run_process(key, cmd, cwd=None):
             if p.poll() != None:
                 break
             time.sleep(0.1)
-    if p.poll()!=0:
+    if p.poll() != 0:
         raise Exception
+
 
 @app.task(bind=True)
 def deploy(self, app_name, git_url):
@@ -128,8 +142,10 @@ def deploy(self, app_name, git_url):
     try:
         repo.remotes['dokku']
     except IndexError:
-        repo.create_remote('dokku', "ssh://dokku@%s:%s/%s" % (settings.DOKKU_HOST, settings.DOKKU_SSH_PORT, app_name))
+        repo.create_remote('dokku', "ssh://dokku@%s:%s/%s" %
+                           (settings.DOKKU_HOST, settings.DOKKU_SSH_PORT, app_name))
     redis.append(key, "== Pulling ==\n")
     run_process(key, ["git", "pull"], cwd=app_repo_path)
     redis.append(key, "== Pushing to Dokku ==\n")
-    run_process(key, ["git", "push", "-f", "dokku", "master"], cwd=app_repo_path)
+    run_process(key, ["git", "push", "-f", "dokku",
+                      "master"], cwd=app_repo_path)
