@@ -212,7 +212,8 @@ def generic_list(app_name, data, name_field, fields):
     for f in fields.keys():
         index = lines[0].find(f)
         if index == -1:
-            raise Exception("Can't find '%s' in '%s'" % (f, lines[0].strip()))
+            # raise Exception("Can't find '%s' in '%s'" % (f, lines[0].strip()))
+            return None
         if f == name_field:
             index = 0
         fields[f]["start"] = index
