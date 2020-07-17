@@ -156,8 +156,10 @@ def generic_config(app, data):
         raise Exception(data)
     config = {}
     for line in lines[1:]:
-        (name, value) = line.split(":", 1)
-        config[name] = value.lstrip()
+        temp_list = line.split(":", 1)
+        if len(temp_list) > 1:
+            (name, value) = line.split(":", 1)
+            config[name] = value.lstrip()
     return config
 
 
