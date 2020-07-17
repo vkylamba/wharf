@@ -169,7 +169,7 @@ def app_config(app_name):
 
 
 def global_config():
-    data = run_cmd_with_cache("config --global")
+    data = run_cmd_with_cache("config:show --global")
     return generic_config("global", data)
 
 
@@ -489,7 +489,7 @@ def check_status():
     # - Celery is up
     # - We can run dokku commands
     clear_cache("config --global")
-    run_cmd_with_cache("config --global")
+    run_cmd_with_cache("config:show --global")
 
 
 def status(request):
