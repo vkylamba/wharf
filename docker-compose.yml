@@ -9,14 +9,8 @@ services:
       - .ssh:/root/.ssh
     ports:
       - 8000:8000
-    environment:
-      - DATABASE_URL=postgres://postgres:example@postgres:5432/wharf
-      - BROKER_URL=redis://redis:6379/0
-      - CACHE_URL=redis://redis:6379/1
-      - DOKKU_SSH_HOST=${DOKKU_SSH_HOST:-127.0.0.1}
-      - DOKKU_SSH_PORT=${DOKKU_SSH_PORT:-22}
-      - GITHUB_SECRET=${GITHUB_SECRET:-password}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-password}
+    env_file:
+      - .env
     depends_on:
       - postgres
       - redis
