@@ -18,3 +18,4 @@ python-decouple
 
 redis < 3 # Version 3 does various things we're not compatible with yet, so don't automatically upgrade
 django-jinja >= 2.5 # Need a fix for https://github.com/niwinz/django-jinja/issues/236
+whitenoise==5.1.0
